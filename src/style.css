@@ -1,0 +1,18 @@
+*,
+*::before,
+*::after {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: #333;
+	overflow: hidden;
+}
+
+#bgCanvas {
+	position: fixed;
+	width: 100vw;
+	height: 100vh;
+}
