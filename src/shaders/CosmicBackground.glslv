@@ -7,11 +7,11 @@ in vec2 aTexCoord;
 in vec3 aVertexColor;
 
 out vec2 vTexCoord;
-out vec4 vVertexColor;
+out vec3 vVertexColor;
 
 void main(){
   vTexCoord = aTexCoord;
-  vVertexColor = vec4(aVertexColor, 1.0);
+  vVertexColor = vec3(aVertexColor);
 
   float posX = aPosition.x;
   float posY = aPosition.y * uAspect;

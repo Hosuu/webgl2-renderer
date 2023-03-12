@@ -9,37 +9,35 @@ uniform float uTime;
 uniform vec3 uFrontColor;
 uniform vec3 uBackColor;
 
+//Custom
+uniform int uIterations;
+uniform vec2 uDirection;
+
 in vec2 vTexCoord;
-in vec4 vVertexColor;
+in vec3 vVertexColor;
 
 out vec4 fragmentColor;
 
-vec4 PixelShaderFunction(vec4 sampleColor, vec2 coords)
-{
-    vec4 result = vec4(0);
-    float volumetricLayerFade = 1.0;
-    for (int i = 0; i < 10; i++)
-    {
-        float time = uTime / volumetricLayerFade;
-        vec2 p = coords * uZoom;
-        p.y += 1.5;
+void main(){
+	vec3 result = vec3(0);
+	float volumetricLayerFade = 1.0;
 
-        p += vec2(time * uScrollSpeedFactor, time * uScrollSpeedFactor);
+	for (int i = 0; i < uIterations; i++){
+        float time = uTime / volumetricLayerFade;
+
+        vec2 p = (vTexCoord - vec2(0.5)) * uZoom;
+        p.y += 1.5;
+        p.x -= 2.3;
+        p += -uDirection * time * uScrollSpeedFactor;
         p /= volumetricLayerFade;
 
         float totalChange = texture(texture0, p).r;
-        vec4 layerColor = vec4(mix(uFrontColor, uBackColor, float(i) / 12.0), 1.0);
+        vec3 layerColor = mix(uFrontColor, uBackColor, float(i) / float(uIterations));
         result += layerColor * totalChange * volumetricLayerFade;
 
         volumetricLayerFade *= 0.9;
     }
 
-    // Account for the accumulated scale from the fractal noise.
-
-    result.rgb = pow(result.rgb * 0.010714, vec3(1.6)) * uBrightness;
-    return result * sampleColor;
-}
-
-void main(){
-  fragmentColor = PixelShaderFunction(vVertexColor, vTexCoord);
+	result.rgb = pow(result.rgb * 0.010714, vec3(1.6)) * uBrightness * vVertexColor;
+	fragmentColor = vec4(result, 1.0);
 }

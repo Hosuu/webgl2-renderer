@@ -10,7 +10,9 @@ interface ShaderUniforms {
 	uAspect: number
 	uScrollSpeedFactor: number
 	uTime: number
+	uIterations: number
 	uZoom: number
+	uDirection: [number, number]
 	uBrightness: number
 	uFrontColor: [number, number, number]
 	uBackColor: [number, number, number]
@@ -65,8 +67,6 @@ export default class BackgroundRenderer {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-
-		gl.generateMipmap(gl.TEXTURE_2D)
 	}
 
 	private static initShaderProgram(): void {
@@ -155,15 +155,28 @@ export default class BackgroundRenderer {
 		gl.bindBuffer(gl.ARRAY_BUFFER, null)
 	}
 
-	//prettier-ignore
-	public static setShaderUniform<U extends keyof ShaderUniforms>(name: U, value: ShaderUniforms[U]) {
+	public static setShaderUniform<U extends keyof ShaderUniforms>(
+		name: U,
+		value: ShaderUniforms[U]
+	) {
 		const gl = this.gl
 		const program = this.shaderProgram
 
 		gl.useProgram(program)
 
+		if (name === 'uIterations') {
+			gl.uniform1i(
+				gl.getUniformLocation(this.shaderProgram, 'uIterations'),
+				Math.round(value as number)
+			)
+			return
+		}
+
 		if (value instanceof Array) {
-			gl.uniform3f(gl.getUniformLocation(program, name), value[0], value[1], value[2]) //Why does ...value not work???
+			if (value.length === 3)
+				gl.uniform3f(gl.getUniformLocation(program, name), value[0], value[1], value[2])
+			//Why does ...value not work???
+			else gl.uniform2f(gl.getUniformLocation(program, name), value[0], value[1]) //Why does ...value not work???
 		} else gl.uniform1f(gl.getUniformLocation(program, name), value)
 	}
 
@@ -204,6 +217,11 @@ export default class BackgroundRenderer {
 			this.setShaderUniform('uAspect', this.canvas.clientWidth / this.canvas.clientHeight)
 			this.setShaderUniform('uScrollSpeedFactor', 0.0024)
 			this.setShaderUniform('uZoom', 1)
+			this.setShaderUniform('uDirection', [
+				Math.cos((3 / 4) * Math.PI),
+				Math.sin(-(3 / 4) * Math.PI),
+			])
+			this.setShaderUniform('uIterations', 10)
 			this.setShaderUniform('uBrightness', 0.7)
 			this.setShaderUniform('uFrontColor', [0.031, 0.42, 0.31])
 			this.setShaderUniform('uBackColor', [0.5, 0, 0.5])
