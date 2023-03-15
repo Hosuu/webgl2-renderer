@@ -30,10 +30,17 @@ async function main() {
 
 	const shader = new ShaderProgram(bgRenderer, vertexCosmicShader, fragCosmicShader)
 
-	const texSize = 512
-	const textureBuffer = await TextureGen.generate(texSize)
 	const texture = new Texture(bgRenderer)
-	texture.setTextureData(0, 0, GL_R32F, texSize, texSize, 0, GL_RED, GL_FLOAT, textureBuffer)
+
+	async function swapTexture(size: number, julia: number = 0.584, iterations: number = 14) {
+		const textureBuffer = await TextureGen.generate(size, julia, iterations)
+		texture.setTextureData(0, 0, GL_R32F, size, size, 0, GL_RED, GL_FLOAT, textureBuffer)
+	}
+
+	//@ts-ignore
+	window.swapTexture = swapTexture
+
+	await swapTexture(512)
 	texture.setTextureParameter(GL_TEXTURE_WRAP_S, GL_REPEAT)
 	texture.setTextureParameter(GL_TEXTURE_WRAP_T, GL_REPEAT)
 	texture.setTextureParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST)
@@ -41,13 +48,16 @@ async function main() {
 
 	shader.bind()
 	shader.setUniform1f('uAspect', bgCanvas.clientWidth / bgCanvas.clientHeight)
-	shader.setUniform1i('uIterations', 14)
 	shader.setUniform1f('uZoom', 0)
+
+	shader.setUniform1i('uIterations', 14)
 	shader.setUniform1f('uBrightness', 0)
-	shader.setUniform2f('uDirection', [1, 1])
-	shader.setUniform1f('uScrollSpeedFactor', 0.0024)
 	shader.setUniform3f('uFrontColor', [0.031, 0.42, 0.31])
 	shader.setUniform3f('uBackColor', [0.5, 0.0, 0.5])
+
+	const angle = Math.random() * Math.PI * 2
+	shader.setUniform2f('uDirection', [Math.cos(angle), Math.sin(angle)])
+	shader.setUniform1f('uScrollSpeedFactor', 0.001)
 
 	//prettier-ignore
 	const vb = new VertexBuffer(bgRenderer,	new Float32Array([
@@ -124,7 +134,19 @@ async function main() {
 	addEventListener('wheel', (e: WheelEvent) => {
 		const initZoom = shader.getUniform('uZoom') as FLOAT1
 		const targetZoom = (initZoom + e.deltaY / 5000) as FLOAT1
-		shader.setUniform1f('uZoom', targetZoom)
+		shader.setUniform1f('uZoom', Math.max(0.1, Math.min(targetZoom, 1)))
+	})
+
+	//ScreenShoots
+	addEventListener('keydown', (e) => {
+		if (e.ctrlKey && e.code === 'KeyS') {
+			e.preventDefault()
+			const width = 1920 * 4
+			const height = 1080 * 4
+			shader.setUniform1f('uAspect', width / height)
+
+			bgRenderer.takeScreenShot(va, ib, shader, width, height)
+		}
 	})
 }
 
