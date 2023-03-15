@@ -1,6 +1,6 @@
 import { GL_FLOAT } from './constants'
 import { GLdataType } from './enumTypes'
-import GLUtils from './GlUtils'
+import GLUtils from './GLUtils'
 
 interface VertexBufferLayoutElement {
 	type: GLdataType

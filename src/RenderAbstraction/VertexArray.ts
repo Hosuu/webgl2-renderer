@@ -1,4 +1,4 @@
-import GLUtils from './GlUtils'
+import GLUtils from './GLUtils'
 import Renderer from './Renderer'
 import VertexBuffer from './VertexBuffer'
 import VertexBufferLayout from './VertexBufferLayout'
